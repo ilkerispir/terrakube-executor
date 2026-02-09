@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/terrakube-io/terrakube/executor-go/internal/core"
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/core"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
 )
 
 func StartServer(port string, processor *core.JobProcessor) {

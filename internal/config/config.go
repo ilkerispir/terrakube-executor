@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
 )
 
 type Config struct {

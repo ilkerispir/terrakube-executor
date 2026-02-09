@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
 )
 
 type Workspace struct {

@@ -3,8 +3,8 @@ package batch
 import (
 	"log"
 
-	"github.com/terrakube-io/terrakube/executor-go/internal/core"
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/core"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
 )
 
 func AdjustAndExecute(job *model.TerraformJob, processor *core.JobProcessor) {

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
-	"github.com/terrakube-io/terrakube/executor-go/internal/terraform"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/terraform"
 )
 
 func (p *JobProcessor) uploadStateAndOutput(job *model.TerraformJob, workingDir string) {

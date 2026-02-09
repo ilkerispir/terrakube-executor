@@ -3,8 +3,8 @@ package status
 import (
 	"fmt"
 
+	"github.com/ilkerispir/terrakube-executor/internal/config"
 	"github.com/terrakube-io/terrakube/executor-go/internal/client"
-	"github.com/terrakube-io/terrakube/executor-go/internal/config"
 	"github.com/terrakube-io/terrakube/executor-go/internal/model"
 )
 

@@ -1,4 +1,4 @@
-module github.com/terrakube-io/terrakube/executor-go
+module github.com/ilkerispir/terrakube-executor
 
 go 1.24.2
 

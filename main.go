@@ -4,12 +4,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/terrakube-io/terrakube/executor-go/internal/config"
-	"github.com/terrakube-io/terrakube/executor-go/internal/core"
-	"github.com/terrakube-io/terrakube/executor-go/internal/mode/batch"
-	"github.com/terrakube-io/terrakube/executor-go/internal/mode/online"
-	"github.com/terrakube-io/terrakube/executor-go/internal/status"
-	"github.com/terrakube-io/terrakube/executor-go/internal/storage"
+	"github.com/ilkerispir/terrakube-executor/internal/config"
+	"github.com/ilkerispir/terrakube-executor/internal/core"
+	"github.com/ilkerispir/terrakube-executor/internal/mode/batch"
+	"github.com/ilkerispir/terrakube-executor/internal/mode/online"
+	"github.com/ilkerispir/terrakube-executor/internal/status"
+	"github.com/ilkerispir/terrakube-executor/internal/storage"
 )
 
 func main() {

@@ -5,14 +5,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/terrakube-io/terrakube/executor-go/internal/config"
-	"github.com/terrakube-io/terrakube/executor-go/internal/logs"
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
-	"github.com/terrakube-io/terrakube/executor-go/internal/script"
-	"github.com/terrakube-io/terrakube/executor-go/internal/status"
-	"github.com/terrakube-io/terrakube/executor-go/internal/storage"
-	"github.com/terrakube-io/terrakube/executor-go/internal/terraform"
-	"github.com/terrakube-io/terrakube/executor-go/internal/workspace"
+	"github.com/ilkerispir/terrakube-executor/internal/config"
+	"github.com/ilkerispir/terrakube-executor/internal/logs"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/script"
+	"github.com/ilkerispir/terrakube-executor/internal/status"
+	"github.com/ilkerispir/terrakube-executor/internal/storage"
+	"github.com/ilkerispir/terrakube-executor/internal/terraform"
+	"github.com/ilkerispir/terrakube-executor/internal/workspace"
 )
 
 type JobProcessor struct {
