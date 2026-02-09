@@ -6,7 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/ilkerispir/terrakube-executor/internal/logs"
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
 )
 
 type Executor struct {

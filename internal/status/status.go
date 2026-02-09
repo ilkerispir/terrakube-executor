@@ -3,9 +3,9 @@ package status
 import (
 	"fmt"
 
+	"github.com/ilkerispir/terrakube-executor/internal/client"
 	"github.com/ilkerispir/terrakube-executor/internal/config"
-	"github.com/terrakube-io/terrakube/executor-go/internal/client"
-	"github.com/terrakube-io/terrakube/executor-go/internal/model"
+	"github.com/ilkerispir/terrakube-executor/internal/model"
 )
 
 type StatusService interface {
