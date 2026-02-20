@@ -1,6 +1,8 @@
 package online
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +14,11 @@ func StartServer(port string, processor *core.JobProcessor) {
 	r := gin.Default()
 
 	r.POST("/api/v1/terraform-rs", func(c *gin.Context) {
+		bodyBytes, _ := c.GetRawData()
+		log.Printf("Received raw payload: %s", string(bodyBytes))
+
 		var job model.TerraformJob
-		if err := c.ShouldBindJSON(&job); err != nil {
+		if err := json.Unmarshal(bodyBytes, &job); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

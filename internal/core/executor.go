@@ -69,6 +69,7 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 }
 
 func (p *JobProcessor) generateBackendOverride(job *model.TerraformJob, workingDir string) error {
+	log.Printf("generateBackendOverride checking override flag: OverrideBackend=%v, TerrakubeApiUrl=%s", job.OverrideBackend, p.Config.TerrakubeApiUrl)
 	if !job.OverrideBackend || p.Config.TerrakubeApiUrl == "" {
 		return nil
 	}
