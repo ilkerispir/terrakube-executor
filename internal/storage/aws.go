@@ -19,27 +19,45 @@ type AWSStorageService struct {
 	bucketName string
 }
 
+func getEnvWithFallback(primary, fallback string) string {
+	val := os.Getenv(primary)
+	if val == "" {
+		return os.Getenv(fallback)
+	}
+	return val
+}
+
 func NewAWSStorageService() (*AWSStorageService, error) {
-	region := os.Getenv("AWS_REGION")
-	bucketName := os.Getenv("AWS_BUCKET_NAME")
-	endpoint := os.Getenv("AWS_ENDPOINT")
-	accessKey := os.Getenv("AWS_ACCESS_KEY_ID")
-	secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	region := getEnvWithFallback("AWS_REGION", "AwsTerraformStateRegion")
+	bucketName := getEnvWithFallback("AWS_BUCKET_NAME", "AwsTerraformStateBucketName")
+	endpoint := getEnvWithFallback("AWS_ENDPOINT", "AwsEndpoint")
+	accessKey := getEnvWithFallback("AWS_ACCESS_KEY_ID", "AwsTerraformStateAccessKey")
+	secretKey := getEnvWithFallback("AWS_SECRET_ACCESS_KEY", "AwsTerraformStateSecretKey")
+	enableRoleAuth := getEnvWithFallback("AWS_ENABLE_ROLE_AUTH", "AwsEnableRoleAuth")
 
 	log.Printf("Initializing AWS Storage Service")
 	log.Printf("Region: %s", region)
 	log.Printf("Bucket: %s", bucketName)
 	log.Printf("Endpoint: %s", endpoint)
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
-			return aws.Credentials{
-				AccessKeyID:     accessKey,
-				SecretAccessKey: secretKey,
-			}, nil
-		})),
-	)
+	var cfg aws.Config
+	var err error
+
+	if enableRoleAuth == "true" {
+		log.Printf("AWS Role Auth is enabled, using default AWS credentials chain")
+		cfg, err = config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	} else {
+		cfg, err = config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
+				return aws.Credentials{
+					AccessKeyID:     accessKey,
+					SecretAccessKey: secretKey,
+				}, nil
+			})),
+		)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to load SDK config, %v", err)
 	}

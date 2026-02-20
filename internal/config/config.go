@@ -18,11 +18,38 @@ type Config struct {
 	StorageAccountKey  string
 }
 
+func getEnvWithFallback(primary, fallback string) string {
+	val := os.Getenv(primary)
+	if val == "" {
+		return os.Getenv(fallback)
+	}
+	return val
+}
+
+func getStorageType() string {
+	st := os.Getenv("STORAGE_TYPE")
+	if st != "" {
+		return st
+	}
+	tst := os.Getenv("TerraformStateType")
+	switch tst {
+	case "AwsTerraformStateImpl":
+		return "AWS"
+	case "AzureTerraformStateImpl":
+		return "AZURE"
+	case "GcpTerraformStateImpl":
+		return "GCP"
+	case "LocalTerraformStateImpl", "":
+		return "LOCAL"
+	}
+	return "LOCAL"
+}
+
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
 		Mode:            os.Getenv("EXECUTOR_MODE"),
-		TerrakubeApiUrl: os.Getenv("TERRAKUBE_API_URL"),
-		StorageType:     os.Getenv("STORAGE_TYPE"),
+		TerrakubeApiUrl: getEnvWithFallback("TERRAKUBE_API_URL", "TerrakubeApiUrl"),
+		StorageType:     getStorageType(),
 	}
 
 	if cfg.Mode == "BATCH" {

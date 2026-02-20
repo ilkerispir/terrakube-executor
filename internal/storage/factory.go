@@ -14,6 +14,8 @@ func NewStorageService(storageType string) (StorageService, error) {
 		return NewAzureStorageService()
 	case "GCP":
 		return NewGCPStorageService()
+	case "LOCAL", "local", "":
+		return &NopStorageService{}, nil
 	default:
 		return nil, fmt.Errorf("unknown storage type: %s", storageType)
 	}
