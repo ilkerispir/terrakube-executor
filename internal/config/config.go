@@ -10,12 +10,13 @@ import (
 )
 
 type Config struct {
-	Mode               string
-	EphemeralJobData   *model.TerraformJob
-	TerrakubeApiUrl    string
-	StorageType        string
-	StorageAccountName string
-	StorageAccountKey  string
+	Mode                    string
+	EphemeralJobData        *model.TerraformJob
+	TerrakubeApiUrl         string
+	TerrakubeRegistryDomain string
+	StorageType             string
+	StorageAccountName      string
+	StorageAccountKey       string
 }
 
 func getEnvWithFallback(primary, fallback string) string {
@@ -47,9 +48,10 @@ func getStorageType() string {
 
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
-		Mode:            os.Getenv("EXECUTOR_MODE"),
-		TerrakubeApiUrl: getEnvWithFallback("TERRAKUBE_API_URL", "TerrakubeApiUrl"),
-		StorageType:     getStorageType(),
+		Mode:                    os.Getenv("EXECUTOR_MODE"),
+		TerrakubeApiUrl:         getEnvWithFallback("TERRAKUBE_API_URL", "TerrakubeApiUrl"),
+		TerrakubeRegistryDomain: getEnvWithFallback("TERRAKUBE_REGISTRY_DOMAIN", "TerrakubeRegistryDomain"),
+		StorageType:             getStorageType(),
 	}
 
 	if cfg.Mode == "BATCH" {

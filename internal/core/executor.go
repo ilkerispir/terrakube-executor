@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/ilkerispir/terrakube-executor/internal/config"
 	"github.com/ilkerispir/terrakube-executor/internal/logs"
@@ -29,6 +30,19 @@ func NewJobProcessor(cfg *config.Config, status status.StatusService, storage st
 		Storage:        storage,
 		VersionManager: terraform.NewVersionManager(),
 	}
+}
+
+func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, workingDir string) error {
+	if p.Config.TerrakubeRegistryDomain == "" || job.AccessToken == "" {
+		return nil
+	}
+
+	credentialsContent := fmt.Sprintf(`credentials "%s" {
+  token = "%s"
+}`, p.Config.TerrakubeRegistryDomain, job.AccessToken)
+
+	rcPath := filepath.Join(workingDir, ".terraformrc")
+	return os.WriteFile(rcPath, []byte(credentialsContent), 0644)
 }
 
 func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
@@ -71,6 +85,16 @@ func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
 			executionErr = fmt.Errorf("failed to install terraform %s: %w", job.TerraformVersion, err)
 			break
 		}
+
+		if err := p.generateTerraformCredentials(job, workingDir); err != nil {
+			executionErr = fmt.Errorf("failed to generate terraform credentials: %w", err)
+			break
+		}
+
+		if job.EnvironmentVariables == nil {
+			job.EnvironmentVariables = make(map[string]string)
+		}
+		job.EnvironmentVariables["TF_CLI_CONFIG_FILE"] = filepath.Join(workingDir, ".terraformrc")
 
 		tfExecutor := terraform.NewExecutor(job, workingDir, streamer, execPath)
 		executionErr = tfExecutor.Execute()
