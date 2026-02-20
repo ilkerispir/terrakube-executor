@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -33,16 +34,64 @@ func NewJobProcessor(cfg *config.Config, status status.StatusService, storage st
 }
 
 func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, workingDir string) error {
-	if p.Config.TerrakubeRegistryDomain == "" || job.AccessToken == "" {
+	if job.AccessToken == "" {
 		return nil
 	}
 
-	credentialsContent := fmt.Sprintf(`credentials "%s" {
+	credentialsContent := ""
+
+	if p.Config.TerrakubeRegistryDomain != "" {
+		credentialsContent += fmt.Sprintf(`credentials "%s" {
   token = "%s"
-}`, p.Config.TerrakubeRegistryDomain, job.AccessToken)
+}
+`, p.Config.TerrakubeRegistryDomain, job.AccessToken)
+	}
+
+	if p.Config.TerrakubeApiUrl != "" {
+		parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
+		if err == nil && parsedUrl.Hostname() != "" {
+			// Do not duplicate if same domain
+			if parsedUrl.Hostname() != p.Config.TerrakubeRegistryDomain {
+				credentialsContent += fmt.Sprintf(`credentials "%s" {
+  token = "%s"
+}
+`, parsedUrl.Hostname(), job.AccessToken)
+			}
+		}
+	}
+
+	if credentialsContent == "" {
+		return nil
+	}
 
 	rcPath := filepath.Join(workingDir, ".terraformrc")
 	return os.WriteFile(rcPath, []byte(credentialsContent), 0644)
+}
+
+func (p *JobProcessor) generateBackendOverride(job *model.TerraformJob, workingDir string) error {
+	if !job.OverrideBackend || p.Config.TerrakubeApiUrl == "" {
+		return nil
+	}
+
+	parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
+	if err != nil {
+		return fmt.Errorf("invalid TerrakubeApiUrl: %v", err)
+	}
+	hostname := parsedUrl.Hostname()
+
+	overrideContent := fmt.Sprintf(`terraform {
+  backend "remote" {
+    hostname     = "%s"
+    organization = "%s"
+    workspaces {
+      name = "%s"
+    }
+  }
+}
+`, hostname, job.OrganizationId, job.WorkspaceId)
+
+	overridePath := filepath.Join(workingDir, "terrakube_override.tf")
+	return os.WriteFile(overridePath, []byte(overrideContent), 0644)
 }
 
 func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
@@ -83,6 +132,11 @@ func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
 		execPath, err := p.VersionManager.Install(job.TerraformVersion)
 		if err != nil {
 			executionErr = fmt.Errorf("failed to install terraform %s: %w", job.TerraformVersion, err)
+			break
+		}
+
+		if err := p.generateBackendOverride(job, workingDir); err != nil {
+			executionErr = fmt.Errorf("failed to generate backend override: %w", err)
 			break
 		}
 
