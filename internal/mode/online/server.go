@@ -27,5 +27,15 @@ func StartServer(port string, processor *core.JobProcessor) {
 		c.JSON(http.StatusAccepted, job)
 	})
 
+	r.GET("/actuator/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "UP"})
+	})
+	r.GET("/actuator/health/liveness", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "UP"})
+	})
+	r.GET("/actuator/health/readiness", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "UP"})
+	})
+
 	r.Run(":" + port)
 }

@@ -27,8 +27,8 @@ COPY --from=builder /app/executor .
 
 # Default to Online Mode
 ENV EXECUTOR_MODE=ONLINE
-ENV PORT=8080
+ENV PORT=8090
 
-EXPOSE 8080
+EXPOSE 8090
 
 CMD ["./executor"]
