@@ -49,13 +49,17 @@ func stripScheme(domain string) string {
 
 func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, workingDir string) error {
 	var token string
+	log.Printf("generateTerraformCredentials: checking InternalSecret (len: %d)", len(p.Config.InternalSecret))
 	if p.Config.InternalSecret != "" {
 		t, err := auth.GenerateTerrakubeToken(p.Config.InternalSecret)
 		if err != nil {
 			log.Printf("Warning: failed to generate Terrakube token for .terraformrc: %v", err)
 		} else {
 			token = t
+			log.Printf("generateTerraformCredentials: token generated successfully")
 		}
+	} else {
+		log.Printf("Warning: InternalSecret is empty, skipping token generation")
 	}
 
 	if token == "" {
@@ -67,6 +71,7 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 	registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
 	if registryHost != "" {
 		credentials[registryHost] = map[string]string{"token": token}
+		log.Printf("generateTerraformCredentials: added credentials for registryHost: %s", registryHost)
 	}
 
 	if p.Config.TerrakubeApiUrl != "" {
@@ -75,11 +80,13 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 			apiHost := parsedUrl.Hostname()
 			if apiHost != registryHost {
 				credentials[apiHost] = map[string]string{"token": token}
+				log.Printf("generateTerraformCredentials: added credentials for apiHost: %s", apiHost)
 			}
 		}
 	}
 
 	if len(credentials) == 0 {
+		log.Printf("generateTerraformCredentials: no credentials generated, returning")
 		return nil
 	}
 
@@ -93,6 +100,7 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 	}
 
 	rcPath := filepath.Join(workingDir, "credentials.tfrc.json")
+	log.Printf("generateTerraformCredentials: writing credentials to %s", rcPath)
 	return os.WriteFile(rcPath, jsonBytes, 0644)
 }
 
