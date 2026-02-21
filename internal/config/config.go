@@ -52,7 +52,7 @@ func LoadConfig() (*Config, error) {
 		Mode:                    os.Getenv("EXECUTOR_MODE"),
 		TerrakubeApiUrl:         getEnvWithFallback("TERRAKUBE_API_URL", "TerrakubeApiUrl"),
 		TerrakubeRegistryDomain: getEnvWithFallback("TERRAKUBE_REGISTRY_DOMAIN", "TerrakubeRegistryDomain"),
-		InternalSecret:          getEnvWithFallback("INTERNAL_SECRET", "InternalSecret"),
+		InternalSecret:          getEnvWithFallback("TERRAKUBE_INTERNAL_SECRET", "InternalSecret"),
 		StorageType:             getStorageType(),
 	}
 

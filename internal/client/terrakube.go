@@ -37,7 +37,7 @@ func (c *TerrakubeClient) UpdateJobStatus(orgId, jobId string, status string, ou
 			},
 		},
 	}
-	return c.patch(fmt.Sprintf("/organization/%s/job/%s", orgId, jobId), payload)
+	return c.patch(fmt.Sprintf("/api/v1/organization/%s/job/%s", orgId, jobId), payload)
 }
 
 // UpdateStepStatus updates the step status
@@ -52,7 +52,7 @@ func (c *TerrakubeClient) UpdateStepStatus(orgId, jobId, stepId string, status s
 			},
 		},
 	}
-	return c.patch(fmt.Sprintf("/organization/%s/job/%s/step/%s", orgId, jobId, stepId), payload)
+	return c.patch(fmt.Sprintf("/api/v1/organization/%s/job/%s/step/%s", orgId, jobId, stepId), payload)
 }
 
 func (c *TerrakubeClient) patch(path string, payload interface{}) error {
