@@ -53,6 +53,12 @@ func (e *Executor) Execute() error {
 	for k, v := range e.Job.Variables {
 		env[fmt.Sprintf("TF_VAR_%s", k)] = v
 	}
+
+	// Force CLI Config File path globally
+	if cliConfig, ok := e.Job.EnvironmentVariables["TF_CLI_CONFIG_FILE"]; ok {
+		env["TF_CLI_CONFIG_FILE"] = cliConfig
+	}
+
 	tf.SetEnv(env)
 
 	// Set Log Streaming

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ilkerispir/terrakube-executor/internal/config"
 	"github.com/ilkerispir/terrakube-executor/internal/logs"
@@ -33,6 +34,17 @@ func NewJobProcessor(cfg *config.Config, status status.StatusService, storage st
 	}
 }
 
+func stripScheme(domain string) string {
+	u, err := url.Parse(domain)
+	if err == nil && u.Hostname() != "" {
+		return u.Hostname()
+	}
+	// Fallback to manual strip if no scheme provided
+	domain = strings.TrimPrefix(domain, "https://")
+	domain = strings.TrimPrefix(domain, "http://")
+	return domain
+}
+
 func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, workingDir string) error {
 	if job.AccessToken == "" {
 		return nil
@@ -40,22 +52,25 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 
 	credentialsContent := ""
 
-	if p.Config.TerrakubeRegistryDomain != "" {
+	registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
+
+	if registryHost != "" {
 		credentialsContent += fmt.Sprintf(`credentials "%s" {
   token = "%s"
 }
-`, p.Config.TerrakubeRegistryDomain, job.AccessToken)
+`, registryHost, job.AccessToken)
 	}
 
 	if p.Config.TerrakubeApiUrl != "" {
 		parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
 		if err == nil && parsedUrl.Hostname() != "" {
+			apiHost := parsedUrl.Hostname()
 			// Do not duplicate if same domain
-			if parsedUrl.Hostname() != p.Config.TerrakubeRegistryDomain {
+			if apiHost != registryHost {
 				credentialsContent += fmt.Sprintf(`credentials "%s" {
   token = "%s"
 }
-`, parsedUrl.Hostname(), job.AccessToken)
+`, apiHost, job.AccessToken)
 			}
 		}
 	}
