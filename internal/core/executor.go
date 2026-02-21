@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/url"
@@ -145,12 +146,15 @@ func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
 	}
 
 	// 2. Setup Logging
-	var streamer logs.LogStreamer
+	var baseStreamer logs.LogStreamer
 	if os.Getenv("USE_REDIS_LOGS") == "true" {
-		streamer = logs.NewRedisStreamer(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASSWORD"), job.JobId, job.StepId)
+		baseStreamer = logs.NewRedisStreamer(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASSWORD"), job.JobId, job.StepId)
 	} else {
-		streamer = &logs.ConsoleStreamer{}
+		baseStreamer = &logs.ConsoleStreamer{}
 	}
+
+	var logBuffer bytes.Buffer
+	streamer := logs.NewMultiStreamer(baseStreamer, &logBuffer)
 	defer streamer.Close()
 
 	// 3. Setup Workspace
@@ -204,9 +208,9 @@ func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
 
 	// 6. Update Status to Completed/Failed
 	success := executionErr == nil
-	output := ""
+	output := logBuffer.String()
 	if executionErr != nil {
-		output = executionErr.Error()
+		output += "\nError: " + executionErr.Error()
 	}
 
 	if err := p.Status.SetCompleted(job, success, output); err != nil {

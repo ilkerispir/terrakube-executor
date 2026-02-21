@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/ilkerispir/terrakube-executor/internal/logs"
@@ -72,7 +71,7 @@ func (e *Executor) Execute() error {
 
 	switch e.Job.Type {
 	case "terraformPlan":
-		_, err = tf.Plan(ctx, tfexec.Out(filepath.Join(e.WorkingDir, "terraform.tfplan")))
+		_, err = tf.Plan(ctx)
 	case "terraformApply":
 		// Apply should probably use the plan if available?
 		// For now standard apply
