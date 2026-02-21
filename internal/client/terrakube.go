@@ -10,12 +10,14 @@ import (
 
 type TerrakubeClient struct {
 	ApiUrl     string
+	Token      string
 	HttpClient *http.Client
 }
 
-func NewTerrakubeClient(apiUrl string) *TerrakubeClient {
+func NewTerrakubeClient(apiUrl string, token string) *TerrakubeClient {
 	return &TerrakubeClient{
 		ApiUrl: apiUrl,
+		Token:  token,
 		HttpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -64,6 +66,9 @@ func (c *TerrakubeClient) patch(path string, payload interface{}) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/vnd.api+json")
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
+	}
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

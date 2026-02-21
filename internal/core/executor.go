@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ilkerispir/terrakube-executor/internal/auth"
 	"github.com/ilkerispir/terrakube-executor/internal/config"
 	"github.com/ilkerispir/terrakube-executor/internal/logs"
 	"github.com/ilkerispir/terrakube-executor/internal/model"
@@ -46,31 +47,39 @@ func stripScheme(domain string) string {
 }
 
 func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, workingDir string) error {
-	if job.AccessToken == "" {
-		return nil
-	}
-
 	credentialsContent := ""
 
-	registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
-
-	if registryHost != "" {
-		credentialsContent += fmt.Sprintf(`credentials "%s" {
-  token = "%s"
-}
-`, registryHost, job.AccessToken)
+	var token string
+	if p.Config.InternalSecret != "" {
+		t, err := auth.GenerateTerrakubeToken(p.Config.InternalSecret)
+		if err != nil {
+			log.Printf("Warning: failed to generate Terrakube token for .terraformrc: %v", err)
+		} else {
+			token = t
+		}
 	}
 
-	if p.Config.TerrakubeApiUrl != "" {
-		parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
-		if err == nil && parsedUrl.Hostname() != "" {
-			apiHost := parsedUrl.Hostname()
-			// Do not duplicate if same domain
-			if apiHost != registryHost {
-				credentialsContent += fmt.Sprintf(`credentials "%s" {
+	if token != "" {
+		registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
+
+		if registryHost != "" {
+			credentialsContent += fmt.Sprintf(`credentials "%s" {
   token = "%s"
 }
-`, apiHost, job.AccessToken)
+`, registryHost, token)
+		}
+
+		if p.Config.TerrakubeApiUrl != "" {
+			parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
+			if err == nil && parsedUrl.Hostname() != "" {
+				apiHost := parsedUrl.Hostname()
+				// Do not duplicate if same domain
+				if apiHost != registryHost {
+					credentialsContent += fmt.Sprintf(`credentials "%s" {
+  token = "%s"
+}
+`, apiHost, token)
+				}
 			}
 		}
 	}

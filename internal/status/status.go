@@ -3,6 +3,9 @@ package status
 import (
 	"fmt"
 
+	"log"
+
+	"github.com/ilkerispir/terrakube-executor/internal/auth"
 	"github.com/ilkerispir/terrakube-executor/internal/client"
 	"github.com/ilkerispir/terrakube-executor/internal/config"
 	"github.com/ilkerispir/terrakube-executor/internal/model"
@@ -18,8 +21,12 @@ type Service struct {
 }
 
 func NewStatusService(cfg *config.Config) *Service {
+	token, err := auth.GenerateTerrakubeToken(cfg.InternalSecret)
+	if err != nil {
+		log.Printf("Warning: failed to generate Terrakube token for API requests: %v", err)
+	}
 	return &Service{
-		client: client.NewTerrakubeClient(cfg.TerrakubeApiUrl),
+		client: client.NewTerrakubeClient(cfg.TerrakubeApiUrl, token),
 	}
 }
 

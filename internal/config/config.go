@@ -14,6 +14,7 @@ type Config struct {
 	EphemeralJobData        *model.TerraformJob
 	TerrakubeApiUrl         string
 	TerrakubeRegistryDomain string
+	InternalSecret          string
 	StorageType             string
 	StorageAccountName      string
 	StorageAccountKey       string
@@ -51,6 +52,7 @@ func LoadConfig() (*Config, error) {
 		Mode:                    os.Getenv("EXECUTOR_MODE"),
 		TerrakubeApiUrl:         getEnvWithFallback("TERRAKUBE_API_URL", "TerrakubeApiUrl"),
 		TerrakubeRegistryDomain: getEnvWithFallback("TERRAKUBE_REGISTRY_DOMAIN", "TerrakubeRegistryDomain"),
+		InternalSecret:          getEnvWithFallback("INTERNAL_SECRET", "InternalSecret"),
 		StorageType:             getStorageType(),
 	}
 
