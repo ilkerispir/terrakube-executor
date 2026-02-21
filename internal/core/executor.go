@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -47,8 +48,6 @@ func stripScheme(domain string) string {
 }
 
 func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, workingDir string) error {
-	credentialsContent := ""
-
 	var token string
 	if p.Config.InternalSecret != "" {
 		t, err := auth.GenerateTerrakubeToken(p.Config.InternalSecret)
@@ -59,37 +58,42 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 		}
 	}
 
-	if token != "" {
-		registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
+	if token == "" {
+		return nil
+	}
 
-		if registryHost != "" {
-			credentialsContent += fmt.Sprintf(`credentials "%s" {
-  token = "%s"
-}
-`, registryHost, token)
-		}
+	credentials := make(map[string]map[string]string)
 
-		if p.Config.TerrakubeApiUrl != "" {
-			parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
-			if err == nil && parsedUrl.Hostname() != "" {
-				apiHost := parsedUrl.Hostname()
-				// Do not duplicate if same domain
-				if apiHost != registryHost {
-					credentialsContent += fmt.Sprintf(`credentials "%s" {
-  token = "%s"
-}
-`, apiHost, token)
-				}
+	registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
+	if registryHost != "" {
+		credentials[registryHost] = map[string]string{"token": token}
+	}
+
+	if p.Config.TerrakubeApiUrl != "" {
+		parsedUrl, err := url.Parse(p.Config.TerrakubeApiUrl)
+		if err == nil && parsedUrl.Hostname() != "" {
+			apiHost := parsedUrl.Hostname()
+			if apiHost != registryHost {
+				credentials[apiHost] = map[string]string{"token": token}
 			}
 		}
 	}
 
-	if credentialsContent == "" {
+	if len(credentials) == 0 {
 		return nil
 	}
 
-	rcPath := filepath.Join(workingDir, ".terraformrc")
-	return os.WriteFile(rcPath, []byte(credentialsContent), 0644)
+	cliConfig := map[string]interface{}{
+		"credentials": credentials,
+	}
+
+	jsonBytes, err := json.MarshalIndent(cliConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	rcPath := filepath.Join(workingDir, "credentials.tfrc.json")
+	return os.WriteFile(rcPath, jsonBytes, 0644)
 }
 
 func (p *JobProcessor) generateBackendOverride(job *model.TerraformJob, workingDir string) error {
@@ -173,7 +177,7 @@ func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
 		if job.EnvironmentVariables == nil {
 			job.EnvironmentVariables = make(map[string]string)
 		}
-		job.EnvironmentVariables["TF_CLI_CONFIG_FILE"] = filepath.Join(workingDir, ".terraformrc")
+		job.EnvironmentVariables["TF_CLI_CONFIG_FILE"] = filepath.Join(workingDir, "credentials.tfrc.json")
 
 		tfExecutor := terraform.NewExecutor(job, workingDir, streamer, execPath)
 		executionErr = tfExecutor.Execute()
