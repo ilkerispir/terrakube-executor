@@ -111,6 +111,16 @@ func (p *JobProcessor) generateBackendOverride(job *model.TerraformJob, workingD
 	}
 	hostname := parsedUrl.Hostname()
 
+	orgName := job.EnvironmentVariables["organizationName"]
+	if orgName == "" {
+		orgName = job.OrganizationId
+	}
+
+	workspaceName := job.EnvironmentVariables["workspaceName"]
+	if workspaceName == "" {
+		workspaceName = job.WorkspaceId
+	}
+
 	overrideContent := fmt.Sprintf(`terraform {
   backend "remote" {
     hostname     = "%s"
@@ -120,7 +130,7 @@ func (p *JobProcessor) generateBackendOverride(job *model.TerraformJob, workingD
     }
   }
 }
-`, hostname, job.OrganizationId, job.WorkspaceId)
+`, hostname, orgName, workspaceName)
 
 	overridePath := filepath.Join(workingDir, "terrakube_override.tf")
 	return os.WriteFile(overridePath, []byte(overrideContent), 0644)
