@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -66,11 +65,11 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 		return nil
 	}
 
-	credentials := make(map[string]map[string]string)
+	content := ""
 
 	registryHost := stripScheme(p.Config.TerrakubeRegistryDomain)
 	if registryHost != "" {
-		credentials[registryHost] = map[string]string{"token": token}
+		content += fmt.Sprintf("credentials \"%s\" {\n  token = \"%s\"\n}\n", registryHost, token)
 		log.Printf("generateTerraformCredentials: added credentials for registryHost: %s", registryHost)
 	}
 
@@ -79,29 +78,25 @@ func (p *JobProcessor) generateTerraformCredentials(job *model.TerraformJob, wor
 		if err == nil && parsedUrl.Hostname() != "" {
 			apiHost := parsedUrl.Hostname()
 			if apiHost != registryHost {
-				credentials[apiHost] = map[string]string{"token": token}
+				content += fmt.Sprintf("credentials \"%s\" {\n  token = \"%s\"\n}\n", apiHost, token)
 				log.Printf("generateTerraformCredentials: added credentials for apiHost: %s", apiHost)
 			}
 		}
 	}
 
-	if len(credentials) == 0 {
+	if content == "" {
 		log.Printf("generateTerraformCredentials: no credentials generated, returning")
 		return nil
 	}
 
-	cliConfig := map[string]interface{}{
-		"credentials": credentials,
-	}
-
-	jsonBytes, err := json.MarshalIndent(cliConfig, "", "  ")
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	rcPath := filepath.Join(workingDir, "credentials.tfrc.json")
-	log.Printf("generateTerraformCredentials: writing credentials to %s", rcPath)
-	return os.WriteFile(rcPath, jsonBytes, 0644)
+	rcPath := filepath.Join(homeDir, ".terraformrc")
+	log.Printf("generateTerraformCredentials: writing HCL credentials to %s", rcPath)
+	return os.WriteFile(rcPath, []byte(content), 0644)
 }
 
 func (p *JobProcessor) generateBackendOverride(job *model.TerraformJob, workingDir string) error {
@@ -181,11 +176,6 @@ func (p *JobProcessor) ProcessJob(job *model.TerraformJob) error {
 			executionErr = fmt.Errorf("failed to generate terraform credentials: %w", err)
 			break
 		}
-
-		if job.EnvironmentVariables == nil {
-			job.EnvironmentVariables = make(map[string]string)
-		}
-		job.EnvironmentVariables["TF_CLI_CONFIG_FILE"] = filepath.Join(workingDir, "credentials.tfrc.json")
 
 		tfExecutor := terraform.NewExecutor(job, workingDir, streamer, execPath)
 		executionErr = tfExecutor.Execute()
